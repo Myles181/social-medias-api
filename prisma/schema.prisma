@@ -1,0 +1,119 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model User {
+  id Int @id @default(autoincrement())
+  email String @unique
+  username String @unique
+  password String 
+  name String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profilePic String?
+  coverPic String? 
+  refreshToken String?
+
+  posts Post[] 
+  likedPosts Like[]
+  comments Comment[]
+
+  chats         Chat[]
+  sentMessages  Message[]
+
+  followers Follow[]  @relation("FollowingUser")
+  followings Follow[]  @relation("FollowerUser")
+}
+
+model Follow{
+  id Int @id @default(autoincrement())
+
+  followerId Int
+  followerUser User @relation("FollowerUser", fields: [followerId], references: [id], onDelete: Cascade)
+
+  followingId Int
+  followingUser User @relation("FollowingUser", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@unique([followerId, followingId])
+}
+
+model Post {
+  id Int @id @default(autoincrement())
+  description String
+
+  createdAt DateTime @default(now())
+
+  userId Int
+  author User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  images PostImage[]
+  likes Like[]
+  comments Comment[]
+
+}
+
+model PostImage {
+  id Int @id @default(autoincrement())
+  basename String
+
+  postId Int
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+}
+
+model Like{
+  id Int @id @default(autoincrement())
+
+  userId Int
+  likedBy User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postId Int
+  postLiked Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postId])
+}
+
+model Comment {
+  id           Int         @id @default(autoincrement())
+  description  String
+  createdAt    DateTime    @default(now())
+
+  userId Int
+  commentBy User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postId Int
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+
+model Chat {
+  id        Int     @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  name String
+
+  participants User[]
+  messages    Message[]
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  createdAt DateTime @default(now())
+
+  senderId Int
+  sender   User   @relation(fields: [senderId], references: [id])
+  
+  chatId   Int
+  chat     Chat   @relation(fields: [chatId], references: [id])
+}
